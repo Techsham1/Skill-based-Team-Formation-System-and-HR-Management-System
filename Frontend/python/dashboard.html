@@ -265,7 +265,18 @@
             </div>
         </header>
 
-        <!-- Navigation -->
+        <!-- Back to Main Navigation -->
+        <nav style="background: #f8f9fa; border-left: 4px solid #667eea;">
+            <div class="nav-grid">
+                <a href="../index.html" class="nav-btn" style="text-decoration: none; display: inline-block;">🏠 Dashboard</a>
+                <a href="../employees.html" class="nav-btn" style="text-decoration: none; display: inline-block;">👥 Employees</a>
+                <a href="../add-employee.html" class="nav-btn" style="text-decoration: none; display: inline-block;">➕ Add Employee</a>
+                <a href="../attendance.html" class="nav-btn" style="text-decoration: none; display: inline-block;">� Import CSV</a>
+                <a href="../team.html" class="nav-btn" style="text-decoration: none; display: inline-block;">🤝 Team Formation</a>
+            </div>
+        </nav>
+
+        <!-- Analytics Navigation -->
         <nav>
             <div class="nav-grid">
                 <button class="nav-btn active" onclick="showSection('overview')">📊 Overview</button>
@@ -1237,22 +1248,30 @@
 
         // Section Navigation
         function showSection(sectionId) {
-            // Hide all sections
+            // Hide all sections and their charts
             document.querySelectorAll('.section').forEach(section => {
                 section.style.display = 'none';
+                section.querySelectorAll('.chart-container').forEach(chart => {
+                    chart.classList.remove('active');
+                });
             });
 
-            // Show selected section
+            // Show selected section and its charts
             const section = document.getElementById(sectionId);
             if (section) {
                 section.style.display = 'block';
+                section.querySelectorAll('.chart-container').forEach(chart => {
+                    chart.classList.add('active');
+                });
             }
 
             // Update active button
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
 
             // Force chart re-render
             setTimeout(() => {

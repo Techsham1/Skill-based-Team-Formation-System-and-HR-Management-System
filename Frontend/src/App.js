@@ -1,22 +1,41 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Employees from './components/Employees';
 import AddEmployee from './components/AddEmployee';
 import Attendance from './components/Attendance';
 import TeamFormation from './components/TeamFormation';
+import TeamResults from './components/TeamResults';
+import Login from './components/Login';
+import CandidateImport from './components/CandidateImport';
 import './App.css';
 
-function AppContent() {
+const AUTH_KEY = 'skillbase_auth_user';
+
+function AppContent({ isAuthenticated, onLogout, onLogin }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login onLogin={onLogin} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <div className="app">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} currentPath={location.pathname} />
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        currentPath={location.pathname}
+        onLogout={onLogout}
+      />
       <div className={`main-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <button 
+        <button
           className={`mobile-menu-toggle ${sidebarOpen ? 'active' : ''}`}
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle menu"
@@ -28,10 +47,15 @@ function AppContent() {
         <div className="main-content-wrapper">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/candidates" element={<Employees />} />
             <Route path="/employees" element={<Employees />} />
             <Route path="/add-employee" element={<AddEmployee />} />
             <Route path="/attendance" element={<Attendance />} />
+            <Route path="/candidate-import" element={<CandidateImport />} />
             <Route path="/team" element={<TeamFormation />} />
+            <Route path="/results" element={<TeamResults />} />
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </div>
@@ -40,9 +64,23 @@ function AppContent() {
 }
 
 function App() {
+  const [authUser, setAuthUser] = useState(() => localStorage.getItem(AUTH_KEY) || '');
+
+  const isAuthenticated = useMemo(() => Boolean(authUser), [authUser]);
+
+  const handleLogin = (email) => {
+    localStorage.setItem(AUTH_KEY, email);
+    setAuthUser(email);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(AUTH_KEY);
+    setAuthUser('');
+  };
+
   return (
     <Router>
-      <AppContent />
+      <AppContent isAuthenticated={isAuthenticated} onLogout={handleLogout} onLogin={handleLogin} />
     </Router>
   );
 }

@@ -3,39 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Employee List</title>
+  <meta name="description" content="Manage employees in HR System">
+  <title>Employees - HR Management System</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <aside class="sidebar">
-    <h2>HR Panel</h2>
+    <h2>🎯 HR System</h2>
     <ul>
       <li><a href="index.html">🏠 Dashboard</a></li>
       <li><a href="employees.html" class="active">👥 Employees</a></li>
       <li><a href="add-employee.html">➕ Add Employee</a></li>
+      <li><a href="import-employees.html">📕 Import CSV</a></li>
       <li><a href="attendance.html">🕒 Attendance</a></li>
-      <li><a href="team.html" class="active">🤝 Team Formation</a></li>
+      <li><a href="team.html">🤝 Team Formation</a></li>
+      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
+      <li><a href="python/dashboard.html">📊 Analytics</a></li>
     </ul>
   </aside>
 
   <section class="main-content">
     <header>
-      <h1>Employee List</h1>
-      <div class="user">👤 Admin</div>
+      <div>
+        <h1>Employee List</h1>
+      </div>
+      <div class="user">👤 Admin User</div>
     </header>
 
-    <table id="employeeTable">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Department</th>
-          <th>Role</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="result-box show">
+      <table id="employeeTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Skills</th>
+            <th>Experience (yrs)</th>
+            <th>Rating</th>
+            <th>Availability</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
 
   <script src="script.js"></script>

@@ -32,6 +32,28 @@ npm start
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Python Team Algorithm API (Required for Team Formation)
+
+The Team Formation module now calls Python APIs so clicking `Generate Team` runs backend K-Means + attention logic.
+
+1. Start employee backend (already used by Employees module):
+```bash
+# should expose: http://localhost:8080/api/employees
+```
+
+2. Start Python team API:
+```bash
+cd python
+pip install -r requirements-team-api.txt
+python team_api.py
+```
+
+3. Optional environment overrides in frontend:
+```bash
+REACT_APP_EMPLOYEE_API_URL=http://localhost:8080/api/employees
+REACT_APP_ML_API_URL=http://localhost:8080/api/ml
+```
+
 ### Building for Production
 
 ```bash

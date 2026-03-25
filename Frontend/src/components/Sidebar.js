@@ -2,17 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Sidebar.css';
 
-const Sidebar = ({ sidebarOpen, setSidebarOpen, currentPath }) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen, currentPath, onLogout }) => {
   const menuItems = [
-    { path: '/', icon: '🏠', label: 'Dashboard' },
-    { path: '/employees', icon: '👥', label: 'Employees' },
-    { path: '/add-employee', icon: '➕', label: 'Add Employee' },
-    { path: '/attendance', icon: '🕒', label: 'Attendance' },
-    { path: '/team', icon: '🤝', label: 'Team Formation' },
+    { path: '/', icon: 'DB', label: 'Dashboard' },
+    { path: '/candidates', icon: 'CM', label: 'Candidates' },
+    { path: '/candidate-import', icon: 'IM', label: 'Candidate Import' },
+    { path: '/team', icon: 'AI', label: 'Team Formation' },
+    { path: '/results', icon: 'RS', label: 'Results' },
   ];
 
   const handleLinkClick = () => {
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 900) {
       setSidebarOpen(false);
     }
   };
@@ -21,7 +21,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, currentPath }) => {
     <>
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <h2>HR Panel</h2>
+        <h2>Skillbase AI</h2>
         <ul>
           {menuItems.map((item) => (
             <li key={item.path}>
@@ -36,10 +36,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, currentPath }) => {
             </li>
           ))}
         </ul>
+        <button className="sidebar-logout" onClick={onLogout}>
+          Logout
+        </button>
       </aside>
     </>
   );
 };
 
 export default Sidebar;
-

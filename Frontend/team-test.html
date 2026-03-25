@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Formation Test - Debug</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .debug-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fff;
+      border: 2px solid #004aad;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      max-height: 600px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .debug-panel h3 {
+      margin-top: 0;
+      color: #004aad;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+    .debug-log {
+      background: #f5f5f5;
+      padding: 10px;
+      margin: 5px 0;
+      border-left: 3px solid #1cc88a;
+      border-radius: 3px;
+    }
+    .debug-log.error {
+      border-left-color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>🎯 HR System</h2>
+    <ul>
+      <li><a href="index.html">🏠 Dashboard</a></li>
+      <li><a href="employees.html">👥 Employees</a></li>
+      <li><a href="add-employee.html">➕ Add Employee</a></li>
+      <li><a href="import-employees.html">📕 Import CSV</a></li>
+      <li><a href="team.html" class="active">🤝 Team Formation</a></li>
+      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
+      <li><a href="python/dashboard.html">📊 Analytics</a></li>
+    </ul>
+  </aside>
+
+  <section class="main-content">
+    <header>
+      <div>
+        <h1>Team Formation - DEBUG MODE</h1>
+      </div>
+      <div class="user">👤 Admin User</div>
+    </header>
+
+    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);">
+      <h2>🧪 Test Team Generation</h2>
+      <p style="margin-bottom: 25px; color: #7f8c8d; font-size: 1rem;">This page helps debug the team generation algorithm.</p>
+      
+      <button onclick="loadAndTestTeamGeneration()" style="width: auto; margin-bottom: 30px;">
+        📊 Load Test Data & Generate Teams
+      </button>
+      
+      <div id="debugPanel" class="debug-panel">
+        <h3>Debug Logs</h3>
+        <div id="debugLogs"></div>
+      </div>
+
+      <div class="result-box" id="teamResult"></div>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+  <script>
+    // Override console.log to show in debug panel
+    const originalLog = console.log;
+    const originalError = console.error;
+    
+    function addDebugLog(message, isError = false) {
+      const debugLogs = document.getElementById('debugLogs');
+      const logDiv = document.createElement('div');
+      logDiv.className = 'debug-log' + (isError ? ' error' : '');
+      logDiv.textContent = (isError ? '❌ ' : '✓ ') + message;
+      debugLogs.appendChild(logDiv);
+      debugLogs.scrollTop = debugLogs.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addDebugLog(args.map(a => typeof a === 'object' ? JSON.stringify(a).substring(0, 50) : String(a)).join(' '), false);
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addDebugLog(args.map(a => typeof a === 'object' ? JSON.stringify(a).substring(0, 50) : String(a)).join(' '), true);
+    };
+
+    function loadAndTestTeamGeneration() {
+      console.log('=== STARTING TEAM GENERATION TEST ===');
+      console.log('Page URL:', window.location.href);
+      console.log('Checking for generateTeamBtn...');
+      
+      // Load test data
+      loadTestData();
+      console.log('Test data loaded, employees variable:', employees.length, 'employees');
+      
+      // Simulate the button click
+      setTimeout(() => {
+        const btn = document.getElementById("generateTeamBtn");
+        if (btn) {
+          console.log('✓ generateTeamBtn found! Clicking it...');
+          btn.click();
+        } else {
+          console.log('⚠ generateTeamBtn not found on this page.');
+          console.log('Trying manual team generation instead...');
+          testManualTeamGeneration();
+        }
+      }, 500);
+    }
+
+    function testManualTeamGeneration() {
+      console.log('Testing manual team generation...');
+      
+      const numTeams = 2;
+      const teamBasis = 'balanced';
+      const criteria = ['technical-skills', 'problem-solving', 'role-expertise'];
+      
+      console.log('Calling generateAIOptimizedTeams with:', {
+        numTeams,
+        teamBasis,
+        criteria,
+        employeeCount: employees.length
+      });
+      
+      try {
+        const teams = generateAIOptimizedTeams(employees, numTeams, teamBasis, criteria);
+        console.log('SUCCESS! Teams generated:', teams.length, 'teams');
+        teams.forEach((team, idx) => {
+          console.log(`Team ${idx + 1}: ${team.length} members`, team.map(e => e.name));
+        });
+        
+        // Display the teams
+        const teamStats = calculateTeamStatistics(teams);
+        displayTeams(teams, teamStats, numTeams, teamBasis, criteria);
+      } catch (error) {
+        console.error('FAILED! Error:', error.message);
+        console.error('Stack:', error.stack);
+      }
+    }
+
+    function displayTeams(teams, teamStats, numTeams, teamBasis, criteria) {
+      const resultBox = document.getElementById('teamResult');
+      const colors = [
+        { bg: 'linear-gradient(135deg, #4e73df 0%, #224abe 100%)', icon: '👥' },
+        { bg: 'linear-gradient(135deg, #1cc88a 0%, #17a673 100%)', icon: '👥' },
+        { bg: 'linear-gradient(135deg, #f6c23e 0%, #dda20a 100%)', icon: '👥' },
+        { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', icon: '👥' },
+      ];
+
+      let html = `<h2 style="color: #004aad;">✅ Teams Generated Successfully!</h2>`;
+      
+      teams.forEach((team, index) => {
+        const color = colors[index % colors.length];
+        const stats = teamStats[index] || { avgRating: 0, departments: 'N/A', count: 0 };
+        
+        html += `<div style="background: ${color.bg}; padding: 20px; border-radius: 10px; color: white; margin: 15px 0;">
+          <h3>${color.icon} Team ${index + 1} (${team.length} members)</h3>
+          <p>Avg Rating: ${stats.avgRating.toFixed(1)} | Departments: ${stats.departments}</p>
+          <ul style="list-style: none; padding: 0;">`;
+        
+        team.forEach(emp => {
+          html += `<li>• ${emp.name} (${emp.role})</li>`;
+        });
+        
+        html += `</ul></div>`;
+      });
+      
+      resultBox.innerHTML = html;
+      console.log('Teams displayed successfully');
+    }
+  </script>
+</body>
+</html>

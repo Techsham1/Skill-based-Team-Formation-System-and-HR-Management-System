@@ -3,35 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Team Formation</title>
+  <meta name="description" content="AI-powered team formation">
+  <title>Team Formation - HR Management System</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <aside class="sidebar">
-    <h2>HR Panel</h2>
+    <h2>🎯 HR System</h2>
     <ul>
       <li><a href="index.html">🏠 Dashboard</a></li>
       <li><a href="employees.html">👥 Employees</a></li>
       <li><a href="add-employee.html">➕ Add Employee</a></li>
-      <li><a href="attendance.html">🕒 Attendance</a></li>
+      <li><a href="import-employees.html">📕 Import CSV</a></li>
       <li><a href="team.html" class="active">🤝 Team Formation</a></li>
+      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
+      <li><a href="python/dashboard.html">📊 Analytics</a></li>
     </ul>
   </aside>
 
   <section class="main-content">
     <header>
-      <h1>AI Team Formation</h1>
-      <div class="user">👤 Admin</div>
+      <div>
+        <h1>AI Team Formation</h1>
+      </div>
+      <div class="user">👤 Admin User</div>
     </header>
 
-    <button id="generateTeamBtn">Generate Teams</button>
-
-    <div class="result-box" id="teamResult"></div>
-
+    <div class="result-box show">
+      <p style="margin-bottom: 25px; color: var(--text-secondary);">Generate optimal teams based on skills and experience using AI algorithms.</p>
+      <div style="margin-bottom: 30px; display: flex; gap: 15px;">
+        <button id="generateTeamBtn">🤖 Generate Teams</button>
+        <a href="team-test.html" style="display: inline-flex; align-items: center; padding: 12px 24px; background: linear-gradient(135deg, var(--accent-purple) 0%, #8b5cf6 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; border: 2px solid rgba(181, 55, 242, 0.3); box-shadow: 0 0 20px rgba(181, 55, 242, 0.2);">🧪 Debug & Test</a>
+      </div>
+      <div class="result-box" id="teamResult"></div>
+    </div>
   </section>
 
   <script src="script.js"></script>
-
 </body>
 </html>

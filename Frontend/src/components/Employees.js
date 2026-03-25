@@ -1,264 +1,199 @@
-import React, { useState, useEffect } from 'react';
-import { getEmployees, deleteEmployee } from '../utils/api';
-import { exportToCSV, downloadCSV } from '../utils/csvParser';
+import React, { useEffect, useState } from 'react';
+import { createEmployee, deleteEmployee, getEmployees } from '../utils/api';
 import { toast } from '../utils/toast';
 
-const Employees = () => {
-  const [employees, setEmployees] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('');
+const CandidateManagement = () => {
+  const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    skills: '',
+    experience: '',
+    role: '',
+    score: '',
+  });
+
+  const loadCandidates = async () => {
+    try {
+      setLoading(true);
+      setLoadError('');
+      const data = await getEmployees();
+      setCandidates(data);
+    } catch (error) {
+      console.error('Error loading candidates:', error);
+      setLoadError(error.message || 'Unable to load candidates');
+      setCandidates([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadEmployees = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const empData = await getEmployees();
-        setEmployees(empData);
-      } catch (error) {
-        setError('Failed to load employees. Please refresh the page.');
-        console.error('Error loading employees:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEmployees();
-    // Refresh every 5 seconds to get latest data
-    const interval = setInterval(loadEmployees, 5000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    loadCandidates();
   }, []);
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
-      try {
-        await deleteEmployee(id);
-        toast.success(`${name} deleted successfully`);
-        // Reload employees after deletion
-        const empData = await getEmployees();
-        setEmployees(empData);
-      } catch (error) {
-        const errorMsg = `Failed to delete employee: ${error.message}`;
-        toast.error(errorMsg);
-        console.error('Error deleting employee:', error);
-      }
-    }
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleExportCSV = () => {
-    if (employees.length === 0) {
-      toast.info('No employees to export');
+  const handleAddCandidate = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.skills || !form.role) {
+      toast.error('Please fill Name, Skills and Role');
       return;
     }
-    const csvContent = exportToCSV(employees);
-    downloadCSV(csvContent, 'employees_export.csv');
-    toast.success('CSV exported successfully!');
+
+    try {
+      const score = Number(form.score || 0);
+      const generatedId = `CAND-${Date.now()}`;
+      await createEmployee({
+        employeeId: generatedId,
+        name: form.name,
+        skills: form.skills,
+        experience: Number(form.experience || 0),
+        role: form.role,
+        score,
+        performanceRating: Math.min(10, Math.max(0, score / 10)),
+        skillLevel: Math.min(10, Math.max(1, Math.round(score || 1))),
+        department: 'General',
+        availability: 'Available',
+        category: 'Full-time',
+        status: 'Present',
+      });
+      toast.success('Candidate added');
+      setForm({ name: '', skills: '', experience: '', role: '', score: '' });
+      await loadCandidates();
+    } catch (error) {
+      toast.error(`Failed to add candidate: ${error.message}`);
+    }
   };
 
-  const departments = [...new Set(employees.map(emp => emp.department))];
-
-  const filteredEmployees = employees.filter(emp => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
-      emp.name?.toLowerCase().includes(searchLower) ||
-      emp.role?.toLowerCase().includes(searchLower) ||
-      emp.employeeId?.toLowerCase().includes(searchLower) ||
-      emp.skills?.toLowerCase().includes(searchLower) ||
-      emp.department?.toLowerCase().includes(searchLower);
-    const matchesDepartment = !filterDepartment || emp.department === filterDepartment;
-    return matchesSearch && matchesDepartment;
-  });
+  const handleDelete = async (id) => {
+    try {
+      await deleteEmployee(id);
+      toast.success('Candidate removed');
+      await loadCandidates();
+    } catch (error) {
+      toast.error(`Failed to remove candidate: ${error.message}`);
+    }
+  };
 
   return (
     <>
       <header className="header">
-        <h1>Employee List</h1>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-          <button 
-            onClick={handleExportCSV}
-            style={{
-              background: 'linear-gradient(135deg, #1cc88a, #17a673)',
-              padding: '10px 20px',
-              fontSize: '14px'
-            }}
-          >
-            📥 Export CSV
-          </button>
-          <div className="user">👤 Admin</div>
-        </div>
+        <h1>Candidate Management</h1>
+        <div className="user">Talent Pool</div>
       </header>
 
-      <div className="table-container">
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <input
-            type="text"
-            placeholder="Search by name, role, ID, skills, or department..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: '1 1 300px',
-              maxWidth: '500px',
-              minWidth: '200px',
-              padding: '12px 15px',
-              border: '2px solid #e0e0e0',
-              borderRadius: '8px',
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#004aad';
-              e.target.style.boxShadow = '0 0 0 3px rgba(0, 74, 173, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e0e0e0';
-              e.target.style.boxShadow = 'none';
-            }}
-          />
-          <select
-            value={filterDepartment}
-            onChange={(e) => setFilterDepartment(e.target.value)}
-            style={{
-              padding: '12px 15px',
-              border: '2px solid #e0e0e0',
-              borderRadius: '8px',
-              fontFamily: 'Poppins, sans-serif',
-              minWidth: '180px',
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-              cursor: 'pointer',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#004aad';
-              e.target.style.boxShadow = '0 0 0 3px rgba(0, 74, 173, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e0e0e0';
-              e.target.style.boxShadow = 'none';
-            }}
-          >
-            <option value="">All Departments</option>
-            {departments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
-            ))}
-          </select>
+      <form className="employee-form" onSubmit={handleAddCandidate}>
+        <h2>Add Candidate</h2>
+        <div className="form-row">
+          <div>
+            <label htmlFor="name">Name</label>
+            <input id="name" name="name" value={form.name} onChange={handleChange} placeholder="Candidate name" />
+          </div>
+          <div>
+            <label htmlFor="role">Role</label>
+            <input id="role" name="role" value={form.role} onChange={handleChange} placeholder="Frontend Engineer" />
+          </div>
         </div>
 
+        <label htmlFor="skills">Skills</label>
+        <input id="skills" name="skills" value={form.skills} onChange={handleChange} placeholder="React, Node, SQL" />
+
+        <div className="form-row">
+          <div>
+            <label htmlFor="experience">Experience</label>
+            <input
+              id="experience"
+              name="experience"
+              type="number"
+              min="0"
+              step="0.5"
+              value={form.experience}
+              onChange={handleChange}
+              placeholder="3"
+            />
+          </div>
+          <div>
+            <label htmlFor="score">Score</label>
+            <input
+              id="score"
+              name="score"
+              type="number"
+              min="0"
+              max="100"
+              value={form.score}
+              onChange={handleChange}
+              placeholder="82"
+            />
+          </div>
+        </div>
+        <button type="submit">Add Candidate</button>
+      </form>
+
+      <section className="table-container">
+        <div className="table-toolbar">
+          <strong>Candidate Table</strong>
+        </div>
         {loading ? (
           <div className="empty-state">
-            <h3>Loading employees...</h3>
+            <h3>Loading candidates...</h3>
           </div>
-        ) : error ? (
+        ) : loadError ? (
           <div className="empty-state">
-            <h3>Error</h3>
-            <p>{error}</p>
+            <h3>Could not load candidates</h3>
+            <p>{loadError}</p>
+            <button className="btn" onClick={loadCandidates}>
+              Retry
+            </button>
           </div>
-        ) : filteredEmployees.length === 0 ? (
+        ) : candidates.length === 0 ? (
           <div className="empty-state">
-            <h3>No employees found</h3>
-            <p>{employees.length === 0 ? 'Add your first employee to get started!' : 'Try adjusting your search or filter.'}</p>
+            <h3>No candidates</h3>
+            <p>Add candidates from the form above.</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Name</th>
-                  <th>Department</th>
-                  <th>Role</th>
                   <th>Skills</th>
-                  <th>Skill Level</th>
                   <th>Experience</th>
-                  <th>Category</th>
-                  <th>Availability</th>
-                  <th>Performance</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th>Role</th>
+                  <th>Score</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredEmployees.map((emp) => (
-                  <tr key={emp.id}>
-                    <td>{emp.employeeId || emp.id || 'N/A'}</td>
-                    <td><strong>{emp.name}</strong></td>
-                    <td>{emp.department}</td>
-                    <td>{emp.role}</td>
-                    <td style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {emp.skills || '-'}
-                    </td>
+                {candidates.map((candidate) => {
+                  const candidateId = candidate.id || candidate.employeeId;
+                  return (
+                  <tr key={candidateId || `${candidate.name}-${candidate.role}`}>
+                    <td>{candidate.name || '-'}</td>
+                    <td className="truncate">{candidate.skills || '-'}</td>
+                    <td>{candidate.experience || 0} yrs</td>
+                    <td>{candidate.role || '-'}</td>
+                    <td>{candidate.score || candidate.performanceRating || 0}</td>
                     <td>
-                      {emp.skillLevel ? (
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          background: emp.skillLevel >= 7 ? '#d4edda' : emp.skillLevel >= 4 ? '#fff3cd' : '#f8d7da',
-                          color: emp.skillLevel >= 7 ? '#155724' : emp.skillLevel >= 4 ? '#856404' : '#721c24',
-                          fontSize: '12px',
-                          fontWeight: '600'
-                        }}>
-                          {emp.skillLevel}/10
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td>{emp.experience ? `${emp.experience} yrs` : '-'}</td>
-                    <td>{emp.category || '-'}</td>
-                    <td>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        background: emp.availability === 'Available' ? '#d4edda' : 
-                                   emp.availability === 'Busy' ? '#fff3cd' : '#f8d7da',
-                        color: emp.availability === 'Available' ? '#155724' : 
-                               emp.availability === 'Busy' ? '#856404' : '#721c24',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        {emp.availability || 'Available'}
-                      </span>
-                    </td>
-                    <td>
-                      {emp.performanceRating ? (
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          background: emp.performanceRating >= 7 ? '#d4edda' : emp.performanceRating >= 4 ? '#fff3cd' : '#f8d7da',
-                          color: emp.performanceRating >= 7 ? '#155724' : emp.performanceRating >= 4 ? '#856404' : '#721c24',
-                          fontSize: '12px',
-                          fontWeight: '600'
-                        }}>
-                          {emp.performanceRating.toFixed(1)}/10
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td>
-                      <span className={`status-badge ${emp.status === 'Present' ? 'present' : 'absent'}`}>
-                        {emp.status || 'Present'}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDelete(emp.id, emp.name)}
-                      >
+                      <button className="delete-btn" onClick={() => handleDelete(candidateId)}>
                         Delete
                       </button>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </section>
     </>
   );
 };
 
-export default Employees;
-
+export default CandidateManagement;

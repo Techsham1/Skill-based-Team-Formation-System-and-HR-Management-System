@@ -22,21 +22,18 @@ const Attendance = () => {
 
     loadEmployees();
     const interval = setInterval(loadEmployees, 5000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const handleToggleStatus = async (id) => {
-    const employee = employees.find(emp => emp.id === id);
+    const employee = employees.find((emp) => emp.id === id);
     if (!employee) return;
 
     const newStatus = employee.status === 'Present' ? 'Absent' : 'Present';
+
     try {
       await updateEmployee(id, { ...employee, status: newStatus });
       toast.success(`${employee.name} marked as ${newStatus}`);
-      // Reload employees after update
       const empData = await getEmployees();
       setEmployees(empData);
     } catch (error) {
@@ -46,24 +43,22 @@ const Attendance = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(emp =>
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter((emp) =>
+    (emp.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const presentCount = employees.filter(emp => emp.status === 'Present').length;
-  const absentCount = employees.filter(emp => emp.status === 'Absent').length;
-  const attendanceRate = employees.length > 0 
-    ? Math.round((presentCount / employees.length) * 100) 
-    : 0;
+  const presentCount = employees.filter((emp) => emp.status === 'Present').length;
+  const absentCount = employees.filter((emp) => emp.status === 'Absent').length;
+  const attendanceRate = employees.length > 0 ? Math.round((presentCount / employees.length) * 100) : 0;
 
   return (
     <>
       <header className="header">
         <h1>Attendance Tracker</h1>
-        <div className="user">👤 Admin</div>
+        <div className="user">Admin Portal</div>
       </header>
 
-      <div className="cards" style={{ marginBottom: '30px' }}>
+      <section className="cards">
         <div className="card green">
           <h3>Present</h3>
           <p>{presentCount}</p>
@@ -76,33 +71,16 @@ const Attendance = () => {
           <h3>Attendance Rate</h3>
           <p>{attendanceRate}%</p>
         </div>
-      </div>
+      </section>
 
-      <div className="table-container">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <section className="table-container">
+        <div className="table-toolbar">
           <input
             type="text"
-            placeholder="Search by name..."
+            className="input-control wide"
+            placeholder="Search by name"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              maxWidth: '400px',
-              padding: '12px 15px',
-              border: '2px solid #e0e0e0',
-              borderRadius: '8px',
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#004aad';
-              e.target.style.boxShadow = '0 0 0 3px rgba(0, 74, 173, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e0e0e0';
-              e.target.style.boxShadow = 'none';
-            }}
           />
         </div>
 
@@ -116,42 +94,44 @@ const Attendance = () => {
             <p>Add employees to start tracking attendance.</p>
           </div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEmployees.map((emp) => (
-                <tr key={emp.id}>
-                  <td>{emp.name}</td>
-                  <td>{emp.department}</td>
-                  <td>
-                    <span className={`status-badge ${emp.status === 'Present' ? 'present' : 'absent'}`}>
-                      {emp.status || 'Present'}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="toggle-btn"
-                      onClick={() => handleToggleStatus(emp.id)}
-                    >
-                      Toggle Status
-                    </button>
-                  </td>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredEmployees.map((emp) => (
+                  <tr key={emp.id}>
+                    <td>{emp.name}</td>
+                    <td>{emp.department}</td>
+                    <td>
+                      <span
+                        className={`status-badge ${
+                          emp.status === 'Absent' ? 'absent' : 'present'
+                        }`}
+                      >
+                        {emp.status || 'Present'}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="toggle-btn" onClick={() => handleToggleStatus(emp.id)}>
+                        Toggle Status
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </section>
     </>
   );
 };
 
 export default Attendance;
-

@@ -3,39 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Employee</title>
+  <meta name="description" content="Add new employee to HR System">
+  <title>Add Employee - HR Management System</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <aside class="sidebar">
-    <h2>HR Panel</h2>
+    <h2>🎯 HR System</h2>
     <ul>
       <li><a href="index.html">🏠 Dashboard</a></li>
       <li><a href="employees.html">👥 Employees</a></li>
       <li><a href="add-employee.html" class="active">➕ Add Employee</a></li>
+      <li><a href="import-employees.html">📕 Import CSV</a></li>
       <li><a href="attendance.html">🕒 Attendance</a></li>
-      <li><a href="team.html" class="active">🤝 Team Formation</a></li>
+      <li><a href="team.html">🤝 Team Formation</a></li>
+      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
+      <li><a href="python/dashboard.html">📊 Analytics</a></li>
     </ul>
   </aside>
 
   <section class="main-content">
     <header>
-      <h1>Add New Employee</h1>
-      <div class="user">👤 Admin</div>
+      <div>
+        <h1>Add New Employee</h1>
+      </div>
+      <div class="user">👤 Admin User</div>
     </header>
 
     <form id="addEmployeeForm" class="employee-form">
-      <label>Full Name:</label>
-      <input type="text" id="name" required placeholder="Enter employee name">
+      <!-- Basic Information -->
+      <fieldset>
+        <legend>📋 Basic Information</legend>
+        
+        <label for="empId">Employee ID</label>
+        <input type="text" id="empId" placeholder="e.g., EMP001 (auto-generated if blank)">
 
-      <label>Department:</label>
-      <input type="text" id="department" required placeholder="Enter department">
+        <label for="name">Full Name *</label>
+        <input type="text" id="name" required placeholder="Enter employee full name">
 
-      <label>Role:</label>
-      <input type="text" id="role" required placeholder="Enter role">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="employee@company.com">
 
-      <button type="submit">Add Employee</button>
+        <label for="phone">Phone</label>
+        <input type="tel" id="phone" placeholder="+1 (555) 123-4567">
+      </fieldset>
+
+      <!-- Professional Details -->
+      <fieldset>
+        <legend>💼 Professional Details</legend>
+
+        <label for="department">Department *</label>
+        <input type="text" id="department" required placeholder="e.g., Engineering, Sales, Design, HR, Finance">
+
+        <label for="role">Role/Position *</label>
+        <input type="text" id="role" required placeholder="e.g., Senior Developer, Manager, UI Designer, Sales Executive">
+
+        <label for="experience">Years of Experience *</label>
+        <input type="number" id="experience" min="0" max="60" required placeholder="e.g., 5" step="0.5">
+
+        <label for="skills">Technical Skills (comma-separated) *</label>
+        <textarea id="skills" required placeholder="e.g., JavaScript, React, Node.js, Python, AWS, SQL" style="min-height: 80px; font-family: monospace;"></textarea>
+      </fieldset>
+
+      <!-- Performance & Availability -->
+      <fieldset>
+        <legend>⭐ Performance & Availability</legend>
+
+        <label for="performanceRating">Performance Rating (1-10) *</label>
+        <input type="number" id="performanceRating" min="1" max="10" step="0.1" required placeholder="Rate from 1-10 (e.g., 8.5)">
+
+        <label for="availability">Availability Status *</label>
+        <select id="availability" required>
+          <option value="">-- Select Availability --</option>
+          <option value="Available">✓ Available</option>
+          <option value="On Leave">📅 On Leave</option>
+          <option value="Partially Available">⚠️ Partially Available</option>
+          <option value="Unavailable">✗ Unavailable</option>
+        </select>
+
+        <label for="dateJoined">Date Joined</label>
+        <input type="date" id="dateJoined">
+      </fieldset>
+
+      <button type="submit">✅ Add Employee to System</button>
     </form>
   </section>
 

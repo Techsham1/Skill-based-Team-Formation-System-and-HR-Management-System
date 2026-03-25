@@ -25,15 +25,23 @@ public class EmployeeService {
     }
 
     public EmployeeResponseDTO createEmployee(EmployeeRequestDTO requestDTO) {
+        String normalizedEmployeeId = normalizeEmployeeId(requestDTO.getEmployeeId());
+
         // Validate employee ID uniqueness if provided
-        if (requestDTO.getEmployeeId() != null && !requestDTO.getEmployeeId().trim().isEmpty()) {
-            if (employeeRepository.existsByEmployeeId(requestDTO.getEmployeeId())) {
-                throw new ValidationException("Employee ID already exists: " + requestDTO.getEmployeeId());
-            }
+        if (normalizedEmployeeId != null && employeeRepository.existsByEmployeeId(normalizedEmployeeId)) {
+            throw new ValidationException("Employee ID already exists: " + normalizedEmployeeId);
         }
 
+        requestDTO.setEmployeeId(normalizedEmployeeId);
         Employee employee = convertToEntity(requestDTO);
         Employee savedEmployee = employeeRepository.save(employee);
+
+        // Keep DB numeric id as primary key and auto-create employee code if missing.
+        if (savedEmployee.getEmployeeId() == null) {
+            savedEmployee.setEmployeeId(generateEmployeeId(savedEmployee.getId()));
+            savedEmployee = employeeRepository.save(savedEmployee);
+        }
+
         return convertToDTO(savedEmployee);
     }
 
@@ -59,13 +67,14 @@ public class EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
 
+        String normalizedEmployeeId = normalizeEmployeeId(requestDTO.getEmployeeId());
+
         // Validate employee ID uniqueness if provided and different from current
-        if (requestDTO.getEmployeeId() != null && !requestDTO.getEmployeeId().trim().isEmpty()) {
-            if (employeeRepository.existsByEmployeeIdAndIdNot(requestDTO.getEmployeeId(), id)) {
-                throw new ValidationException("Employee ID already exists: " + requestDTO.getEmployeeId());
-            }
+        if (normalizedEmployeeId != null && employeeRepository.existsByEmployeeIdAndIdNot(normalizedEmployeeId, id)) {
+            throw new ValidationException("Employee ID already exists: " + normalizedEmployeeId);
         }
 
+        requestDTO.setEmployeeId(normalizedEmployeeId);
         updateEmployeeFields(employee, requestDTO);
         Employee updatedEmployee = employeeRepository.save(employee);
         return convertToDTO(updatedEmployee);
@@ -80,9 +89,8 @@ public class EmployeeService {
 
     private Employee convertToEntity(EmployeeRequestDTO dto) {
         Employee employee = new Employee();
-        employee.setEmployeeId(dto.getEmployeeId() != null && !dto.getEmployeeId().trim().isEmpty() 
-                ? dto.getEmployeeId() : null);
-        employee.setName(dto.getName());
+        employee.setEmployeeId(normalizeEmployeeId(dto.getEmployeeId()));
+        employee.setName(resolveName(dto));
         employee.setDepartment(dto.getDepartment());
         employee.setRole(dto.getRole());
         employee.setSkills(dto.getSkills());
@@ -116,10 +124,11 @@ public class EmployeeService {
 
     private void updateEmployeeFields(Employee employee, EmployeeRequestDTO dto) {
         if (dto.getEmployeeId() != null) {
-            employee.setEmployeeId(dto.getEmployeeId().trim().isEmpty() ? null : dto.getEmployeeId());
+            employee.setEmployeeId(normalizeEmployeeId(dto.getEmployeeId()));
         }
-        if (dto.getName() != null) {
-            employee.setName(dto.getName());
+        String resolvedName = resolveName(dto);
+        if (resolvedName != null) {
+            employee.setName(resolvedName);
         }
         if (dto.getDepartment() != null) {
             employee.setDepartment(dto.getDepartment());
@@ -148,6 +157,28 @@ public class EmployeeService {
         if (dto.getStatus() != null) {
             employee.setStatus(dto.getStatus());
         }
+    }
+
+    private String normalizeEmployeeId(String employeeId) {
+        if (employeeId == null) {
+            return null;
+        }
+        String trimmed = employeeId.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String generateEmployeeId(Long id) {
+        return String.format("EMP%03d", id);
+    }
+
+    private String resolveName(EmployeeRequestDTO dto) {
+        if (dto.getName() != null && !dto.getName().trim().isEmpty()) {
+            return dto.getName().trim();
+        }
+        String first = dto.getFirstName() != null ? dto.getFirstName().trim() : "";
+        String last = dto.getLastName() != null ? dto.getLastName().trim() : "";
+        String fullName = (first + " " + last).trim();
+        return fullName.isEmpty() ? null : fullName;
     }
 }
 

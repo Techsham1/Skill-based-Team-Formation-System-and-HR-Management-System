@@ -3,51 +3,818 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HR Management Dashboard</title>
+  <meta name="description" content="AI-Powered HR Management System">
+  <title>Dashboard - HR Management System</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Dashboard Specific Styles - Using new neon color palette */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-time {
+      background: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: var(--shadow-md), 0 0 20px rgba(0, 212, 255, 0.05);
+      min-width: 250px;
+      text-align: right;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dashboard-time::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+      animation: topGlow 2s ease-in-out infinite;
+    }
+
+    .dashboard-time .clock {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dashboard-time .date {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dashboard-time .status {
+      font-size: 0.85rem;
+      color: var(--accent-emerald);
+      margin-top: 5px;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+
+    /* KPI Cards with Animation */
+    .kpi-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    .kpi-card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md), 0 0 20px rgba(0, 212, 255, 0.05);
+      border-left: 4px solid var(--primary-color);
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -50px;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: floatPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes floatPulse {
+      0%, 100% { transform: translateY(0); opacity: 0.5; }
+      50% { transform: translateY(-10px); opacity: 1; }
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-xl), 0 0 30px rgba(0, 212, 255, 0.1);
+      border-left-color: var(--secondary-color);
+    }
+
+    .kpi-card.blue { border-left-color: var(--primary-color); }
+    .kpi-card.green { border-left-color: var(--accent-emerald); }
+    .kpi-card.orange { border-left-color: var(--warning-color); }
+    .kpi-card.purple { border-left-color: var(--accent-purple); }
+    .kpi-card.red { border-left-color: var(--danger-color); }
+    .kpi-card.cyan { border-left-color: var(--secondary-color); }
+
+    .kpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .kpi-header h3 {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 800;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .kpi-icon {
+      font-size: 1.8rem;
+    }
+
+    .kpi-value {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--primary-color);
+      margin: 10px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .kpi-value.green { color: var(--accent-emerald); text-shadow: 0 0 10px rgba(0, 255, 136, 0.2); }
+    .kpi-value.orange { color: var(--warning-color); }
+    .kpi-value.purple { color: var(--accent-purple); }
+    .kpi-value.red { color: var(--danger-color); }
+
+    .kpi-change {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .kpi-trend {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.1));
+      color: var(--accent-emerald);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin-right: 5px;
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+    }
+
+    /* Grid Layout for Dashboard Sections */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dashboard-widget {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md), 0 0 20px rgba(0, 212, 255, 0.05);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dashboard-widget::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+    }
+
+    .widget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid rgba(0, 212, 255, 0.1);
+      position: relative;
+      z-index: 2;
+    }
+
+    .widget-header h3 {
+      margin: 0;
+      color: var(--primary-color);
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .widget-header span {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(181, 55, 242, 0.1));
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    /* Department Breakdown */
+    .department-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .department-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-color);
+      transition: all var(--transition-base);
+    }
+
+    .department-item:hover {
+      background: linear-gradient(90deg, rgba(0, 212, 255, 0.05), transparent);
+      padding-left: 8px;
+    }
+
+    .department-item:last-child {
+      border-bottom: none;
+    }
+
+    .dept-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .dept-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+    }
+
+    .dept-count {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(181, 55, 242, 0.1));
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 800;
+      color: var(--primary-color);
+      min-width: 45px;
+      text-align: center;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 15px;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border-color);
+      transition: all var(--transition-base);
+    }
+
+    .activity-item:hover {
+      background: linear-gradient(90deg, rgba(0, 212, 255, 0.05), transparent);
+      padding-left: 8px;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      margin-top: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .activity-content h4 {
+      margin: 0 0 3px 0;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .activity-content p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .activity-content .time {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-top: 3px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: 2px solid rgba(0, 212, 255, 0.3);
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-base);
+      font-size: 0.85rem;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2), var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(0, 212, 255, 0.4);
+      transform: translate(-50%, -50%);
+      transition: width var(--transition-base), height var(--transition-base);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.4), 0 8px 20px rgba(15, 82, 186, 0.3);
+      border-color: rgba(0, 212, 255, 0.6);
+    }
+
+    .action-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .action-btn.secondary {
+      background: linear-gradient(135deg, var(--accent-purple) 0%, #8b5cf6 100%);
+      border-color: rgba(181, 55, 242, 0.3);
+      box-shadow: 0 0 20px rgba(181, 55, 242, 0.2), var(--shadow-sm);
+    }
+
+    .action-btn.secondary:hover {
+      box-shadow: 0 0 40px rgba(181, 55, 242, 0.4), 0 8px 20px rgba(181, 55, 242, 0.3);
+      border-color: rgba(181, 55, 242, 0.6);
+    }
+
+    .action-btn.tertiary {
+      background: linear-gradient(135deg, var(--accent-emerald) 0%, #00d9ff 100%);
+      border-color: rgba(0, 255, 136, 0.3);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2), var(--shadow-sm);
+    }
+
+    .action-btn.tertiary:hover {
+      box-shadow: 0 0 40px rgba(0, 255, 136, 0.4), 0 8px 20px rgba(0, 255, 136, 0.3);
+      border-color: rgba(0, 255, 136, 0.6);
+    }
+
+    .action-icon {
+      font-size: 1.5rem;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .stat-mini {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+
+    /* Loading Animation */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Live Indicator */
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e8f5e9;
+      color: #1cc88a;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #1cc88a;
+      border-radius: 50%;
+      animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Gradient Background Accent */
+    .gradient-accent {
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(0, 74, 173, 0.03) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
 
   <!-- Sidebar -->
   <aside class="sidebar">
-    <h2>HR Panel</h2>
+    <h2>🎯 HR System</h2>
     <ul>
       <li><a href="index.html" class="active">🏠 Dashboard</a></li>
       <li><a href="employees.html">👥 Employees</a></li>
       <li><a href="add-employee.html">➕ Add Employee</a></li>
-      <li><a href="attendance.html">🕒 Attendance</a></li>
-      <li><a href="team.html" class="active">🤝 Team Formation</a></li>
+      <li><a href="import-employees.html">📕 Import CSV</a></li>
+      <li><a href="team.html">🤝 Team Formation</a></li>
+      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
+      <li><a href="python/dashboard.html">📊 Analytics</a></li>
     </ul>
   </aside>
 
   <!-- Main Content -->
   <section class="main-content">
     <header>
-      <h1>Dashboard</h1>
-      <div class="user">👤 Admin</div>
+      <div>
+        <h1>Dashboard</h1>
+        <p style="color: var(--text-secondary); margin: 5px 0 0 0; font-size: 0.95rem;">
+          <span class="live-badge">
+            <span class="live-dot"></span>
+            Live Updates
+          </span>
+        </p>
+      </div>
+      <div class="user">👤 Admin User | Last Updated: <span id="lastUpdated">now</span></div>
     </header>
 
-    <div class="cards">
-      <div class="card blue">
-        <h3>Total Employees</h3>
-        <p id="totalEmployees">0</p>
-      </div>
-      <div class="card green">
-        <h3>Departments</h3>
-        <p>5</p>
-      </div>
-      <div class="card orange">
-        <h3>Attendance Rate</h3>
-        <p>95%</p>
+    <!-- Dashboard Header with Time -->
+    <div class="dashboard-header">
+      <div></div>
+      <div class="dashboard-time">
+        <div class="clock" id="liveClock">12:00:00</div>
+        <div class="date" id="liveDate">Monday, January 1, 2026</div>
+        <div class="status">System Online ✓</div>
       </div>
     </div>
 
-    <div class="welcome">
-      <h2>Welcome to AI Based HR Management System</h2>
-      <p>Manage employees, attendance, Team Formation all in one place</p>
+    <!-- KPI Cards -->
+    <div class="kpi-cards">
+      <div class="kpi-card blue">
+        <div class="kpi-header">
+          <h3>Total Employees</h3>
+          <span class="kpi-icon">👥</span>
+        </div>
+        <div class="kpi-value" id="totalEmployeeCount">0</div>
+        <div class="kpi-change">
+          <span class="kpi-trend">↑ 12%</span>
+          <span>from last month</span>
+        </div>
+      </div>
+
+      <div class="kpi-card orange">
+        <div class="kpi-header">
+          <h3>Active Teams</h3>
+          <span class="kpi-icon">🤝</span>
+        </div>
+        <div class="kpi-value orange" id="activeTeamCount">0</div>
+        <div class="kpi-change">
+          <span>Teams configured</span>
+        </div>
+      </div>
+
+      <div class="kpi-card purple">
+        <div class="kpi-header">
+          <h3>Departments</h3>
+          <span class="kpi-icon">🏢</span>
+        </div>
+        <div class="kpi-value purple" id="departmentCount">0</div>
+        <div class="kpi-change">
+          <span>Across organization</span>
+        </div>
+      </div>
+
+      <div class="kpi-card red">
+        <div class="kpi-header">
+          <h3>Avg Performance</h3>
+          <span class="kpi-icon">⭐</span>
+        </div>
+        <div class="kpi-value" id="avgPerformance">0</div>
+        <div class="kpi-change">
+          <span>Rating out of 10</span>
+        </div>
+      </div>
+
+      <div class="kpi-card green">
+        <div class="kpi-header">
+          <h3>Top Performer</h3>
+          <span class="kpi-icon">🏆</span>
+        </div>
+        <div class="kpi-value green" id="topPerformerRating">0</div>
+        <div class="kpi-change">
+          <span id="topPerformerName">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Department Distribution -->
+      <div class="dashboard-widget">
+        <div class="widget-header">
+          <h3>Department Distribution</h3>
+          <span id="deptsCount">0 Depts</span>
+        </div>
+        <ul class="department-list" id="deptList">
+          <li class="department-item">
+            <span class="dept-name">
+              <span class="dept-icon"></span>
+              Engineering
+            </span>
+            <span class="dept-count">0</span>
+          </li>
+        </ul>
+        <div class="stats-bar">
+          <div class="stat-mini">
+            <div class="stat-value" id="totalEmpsFooter">0</div>
+            <div class="stat-label">Total People</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-value" id="avgTeamSize">0</div>
+            <div class="stat-label">Avg per Dept</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="dashboard-widget">
+        <div class="widget-header">
+          <h3>Recent Activity</h3>
+          <span>Last 7 Days</span>
+        </div>
+        <ul class="activity-feed" id="activityFeed">
+          <li class="activity-item">
+            <span class="activity-dot"></span>
+            <div class="activity-content">
+              <h4>System Initialized</h4>
+              <p>Dashboard loaded and ready</p>
+              <div class="time">Just now</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="dashboard-widget">
+      <div class="widget-header">
+        <h3>Quick Actions</h3>
+        <span class="live-badge">
+          <span class="live-dot"></span>
+          Available
+        </span>
+      </div>
+      <div class="quick-actions">
+        <a href="add-employee.html" class="action-btn">
+          <span class="action-icon">➕</span>
+          <span>Add Employee</span>
+        </a>
+        <a href="import-employees.html" class="action-btn secondary">
+          <span class="action-icon">📥</span>
+          <span>Import CSV</span>
+        </a>
+        <a href="team-config.html" class="action-btn">
+          <span class="action-icon">⚙️</span>
+          <span>Configure Teams</span>
+        </a>
+        <a href="team.html" class="action-btn secondary">
+          <span class="action-icon">🤖</span>
+          <span>Generate Teams</span>
+        </a>
+        <a href="employees.html" class="action-btn">
+          <span class="action-icon">👥</span>
+          <span>View Employees</span>
+        </a>
+        <a href="python/dashboard.html" class="action-btn secondary">
+          <span class="action-icon">📊</span>
+          <span>Analytics</span>
+        </a>
+      </div>
     </div>
   </section>
 
   <script src="script.js"></script>
+  <script>
+    // Real-time Clock
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour12: false });
+      const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      
+      document.getElementById('liveClock').textContent = time;
+      document.getElementById('liveDate').textContent = date;
+    }
+
+    // Update Last Modified
+    function updateLastModified() {
+      const now = new Date();
+      const minutes = now.getMinutes();
+      if (minutes === 0) {
+        document.getElementById('lastUpdated').textContent = 'just now';
+      } else {
+        document.getElementById('lastUpdated').textContent = minutes + ' min ago';
+      }
+    }
+
+    // Dashboard Data Updates (runs after script.js loads)
+    function updateDashboard() {
+      try {
+        // Total Employees
+        const totalEmps = employees.length;
+        document.getElementById('totalEmployeeCount').textContent = totalEmps;
+        document.getElementById('totalEmpsFooter').textContent = totalEmps;
+
+        if (totalEmps === 0) {
+          document.getElementById('totalEmployeeCount').closest('.kpi-card').innerHTML = `
+            <div class="kpi-header">
+              <h3>Total Employees</h3>
+              <span class="kpi-icon">👥</span>
+            </div>
+            <div class="kpi-value" style="color: var(--text-secondary);">—</div>
+            <div class="kpi-change">
+              <span>Add employees to get started</span>
+            </div>
+          `;
+			return;
+        }
+
+        // Department Statistics
+        const depts = {};
+        employees.forEach(emp => {
+          const dept = emp.department || 'Other';
+          depts[dept] = (depts[dept] || 0) + 1;
+        });
+
+        const deptCount = Object.keys(depts).length;
+        document.getElementById('departmentCount').textContent = deptCount;
+        document.getElementById('deptsCount').textContent = deptCount + ' Dept' + (deptCount > 1 ? 's' : '');
+        document.getElementById('avgTeamSize').textContent = (totalEmps / deptCount).toFixed(1);
+
+        // Department List
+        const deptList = document.getElementById('deptList');
+        deptList.innerHTML = '';
+        const colors = ['#0f52ba', '#00ff88', '#ffa500', '#b537f2', '#ff0055'];
+        let colorIdx = 0;
+
+        Object.entries(depts)
+          .sort((a, b) => b[1] - a[1])
+          .forEach(([dept, count]) => {
+            const li = document.createElement('li');
+            li.className = 'department-item';
+            li.innerHTML = `
+              <span class="dept-name">
+                <span class="dept-icon" style="background: ${colors[colorIdx % colors.length]}"></span>
+                ${dept}
+              </span>
+              <span class="dept-count">${count}</span>
+            `;
+            deptList.appendChild(li);
+            colorIdx++;
+          });
+
+        // Performance Rating
+        const avgRating = (employees.reduce((sum, e) => sum + (e.performanceRating || 0), 0) / totalEmps).toFixed(1);
+        document.getElementById('avgPerformance').textContent = avgRating;
+
+        // Top Performer
+        const topEmp = employees.reduce((max, e) => (e.performanceRating || 0) > (max.performanceRating || 0) ? e : max, employees[0]);
+        document.getElementById('topPerformerRating').textContent = (topEmp.performanceRating || 0).toFixed(1);
+        document.getElementById('topPerformerName').textContent = topEmp.name || '—';
+
+        // Active Teams Count
+        const configStr = localStorage.getItem('teamConfig');
+        const numTeams = configStr ? JSON.parse(configStr).numTeams : 0;
+        document.getElementById('activeTeamCount').textContent = numTeams;
+
+        // Activity Feed
+        const activities = [
+          { action: 'Dashboard Loaded', detail: 'Real-time monitoring active', time: 'Just now' },
+          { action: totalEmps + ' Employees', detail: 'Across ' + deptCount + ' departments', time: 'Updated now' },
+          { action: 'System Status', detail: 'All systems operational', time: 'Current' }
+        ];
+
+        const activityFeed = document.getElementById('activityFeed');
+        activityFeed.innerHTML = '';
+        activities.forEach(act => {
+          const li = document.createElement('li');
+          li.className = 'activity-item';
+          li.innerHTML = `
+            <span class="activity-dot"></span>
+            <div class="activity-content">
+              <h4>${act.action}</h4>
+              <p>${act.detail}</p>
+              <div class="time">${act.time}</div>
+            </div>
+          `;
+          activityFeed.appendChild(li);
+        });
+
+      } catch (error) {
+        console.error('Dashboard update error:', error);
+      }
+    }
+
+    // Initialize
+    setInterval(updateClock, 1000);
+    setInterval(updateLastModified, 60000);
+    updateClock();
+    
+    // Update dashboard after script.js loads employees
+    setTimeout(updateDashboard, 100);
+    setInterval(updateDashboard, 5000); // Refresh every 5 seconds for live updates
+  </script>
 </body>
 </html>
+

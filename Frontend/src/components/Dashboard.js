@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { getEmployees } from '../utils/api';
 
 const Dashboard = () => {
-  const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState({
-    totalEmployees: 0,
-    departments: 0,
-    attendanceRate: 0,
+    totalCandidates: 0,
+    clustersCreated: 0,
+    teamsGenerated: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -14,22 +13,20 @@ const Dashboard = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const empData = await getEmployees();
-        setEmployees(empData);
+        const candidates = await getEmployees();
+        const lastTeamRaw = localStorage.getItem('last_generated_team');
+        const historyRaw = localStorage.getItem('team_generation_count');
 
-        // Calculate statistics
-        const total = empData.length;
-        const departments = new Set(empData.map(emp => emp.department)).size;
-        // Note: status field might not exist in backend, using availability as fallback
-        const presentCount = empData.filter(emp => 
-          emp.status === 'Present' || emp.availability === 'Available'
-        ).length;
-        const attendanceRate = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+        let clustersCreated = 0;
+        if (lastTeamRaw) {
+          const lastTeam = JSON.parse(lastTeamRaw);
+          clustersCreated = Number(lastTeam?.kmeans?.selectedK || 0);
+        }
 
         setStats({
-          totalEmployees: total,
-          departments: departments,
-          attendanceRate: attendanceRate,
+          totalCandidates: candidates.length,
+          clustersCreated,
+          teamsGenerated: Number(historyRaw || 0),
         });
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -39,61 +36,38 @@ const Dashboard = () => {
     };
 
     loadData();
-    
-    // Refresh every 5 seconds
-    const interval = setInterval(loadData, 5000);
-
-    return () => {
-      clearInterval(interval);
-    };
+    const interval = setInterval(loadData, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <>
       <header className="header">
         <h1>Dashboard</h1>
-        <div className="user">👤 Admin</div>
+        <div className="user">AI Team Workspace</div>
       </header>
 
-      {loading ? (
-        <div className="cards">
-          <div className="card blue skeleton-card">
-            <div className="skeleton skeleton-title" style={{ background: 'rgba(255,255,255,0.3)' }}></div>
-            <div className="skeleton" style={{ height: '40px', background: 'rgba(255,255,255,0.3)' }}></div>
-          </div>
-          <div className="card green skeleton-card">
-            <div className="skeleton skeleton-title" style={{ background: 'rgba(255,255,255,0.3)' }}></div>
-            <div className="skeleton" style={{ height: '40px', background: 'rgba(255,255,255,0.3)' }}></div>
-          </div>
-          <div className="card orange skeleton-card">
-            <div className="skeleton skeleton-title" style={{ background: 'rgba(255,255,255,0.3)' }}></div>
-            <div className="skeleton" style={{ height: '40px', background: 'rgba(255,255,255,0.3)' }}></div>
-          </div>
+      <div className="cards">
+        <div className="card blue">
+          <h3>Total Candidates</h3>
+          <p>{loading ? '...' : stats.totalCandidates}</p>
         </div>
-      ) : (
-        <div className="cards">
-          <div className="card blue">
-            <h3>Total Employees</h3>
-            <p>{stats.totalEmployees}</p>
-          </div>
-          <div className="card green">
-            <h3>Departments</h3>
-            <p>{stats.departments}</p>
-          </div>
-          <div className="card orange">
-            <h3>Attendance Rate</h3>
-            <p>{stats.attendanceRate}%</p>
-          </div>
+        <div className="card green">
+          <h3>Clusters Created</h3>
+          <p>{loading ? '...' : stats.clustersCreated}</p>
         </div>
-      )}
-
-      <div className="welcome">
-        <h2>Welcome to AI Based HR Management System</h2>
-        <p>Manage employees, attendance, Team Formation all in one place</p>
+        <div className="card orange">
+          <h3>Teams Generated</h3>
+          <p>{loading ? '...' : stats.teamsGenerated}</p>
+        </div>
       </div>
+
+      <section className="welcome">
+        <h2>AI Candidate Intelligence</h2>
+        <p>Manage candidate profiles, form optimal teams, and inspect selection logic in one flow.</p>
+      </section>
     </>
   );
 };
 
 export default Dashboard;
-

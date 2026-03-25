@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Import employees from CSV file">
+  <title>Import Employees - HR Management System</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .import-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .import-section {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md), 0 0 20px rgba(0, 212, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-top: 3px solid var(--primary-color);
+    }
+
+    .import-section h3 {
+      color: var(--primary-color);
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* File upload styling */
+    .file-upload-area {
+      border: 3px dashed var(--primary-color);
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(181, 55, 242, 0.08));
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+    }
+
+    .file-upload-area:hover {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(181, 55, 242, 0.15));
+      border-color: var(--secondary-color);
+    }
+
+    .file-upload-area.drag-over {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(181, 55, 242, 0.25));
+      border-color: var(--secondary-color);
+      transform: scale(1.02);
+    }
+
+    .file-upload-area input[type="file"] {
+      display: none;
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .upload-text {
+      color: var(--text-primary);
+      font-weight: 700;
+      margin-bottom: 5px;
+      font-size: 1.05rem;
+    }
+
+    .upload-subtext {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .file-info {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.1));
+      border: 2px solid var(--accent-emerald);
+      color: var(--primary-color);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .file-info.show {
+      display: block;
+    }
+
+    .file-info strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    /* Preview table */
+    .preview-table-container {
+      margin-top: 20px;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .preview-table th {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 800;
+      position: sticky;
+      top: 0;
+      font-size: 0.8rem;
+    }
+
+    .preview-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .preview-table tbody tr:hover {
+      background: linear-gradient(90deg, rgba(0, 212, 255, 0.1), transparent);
+      box-shadow: inset 3px 0 0 var(--secondary-color);
+    }
+
+    /* Instructions */
+    .instructions {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(11, 82, 186, 0.05));
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary-color);
+      margin-bottom: 20px;
+    }
+
+    .instructions h4 {
+      margin: 0 0 15px 0;
+      color: var(--primary-color);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .instructions ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .instructions li {
+      margin-bottom: 8px;
+    }
+
+    .template-download {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      transition: var(--transition-base);
+      box-shadow: var(--shadow-md);
+    }
+
+    .template-download:hover {
+      background: linear-gradient(135deg, var(--primary-dark), #001f3f);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Status messages */
+    .status-message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    .status-message.show {
+      display: block;
+    }
+
+    .status-message.success {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.1));
+      border: 2px solid var(--accent-emerald);
+      color: var(--primary-color);
+    }
+
+    .status-message.error {
+      background: linear-gradient(135deg, rgba(255, 0, 85, 0.1), rgba(255, 0, 85, 0.05));
+      border: 2px solid var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .status-message.warning {
+      background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.05));
+      border: 2px solid var(--warning-color);
+      color: var(--warning-color);
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .action-buttons button {
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 130px;
+    }
+
+    .btn-import {
+      background: linear-gradient(135deg, var(--accent-emerald) 0%, #00bb77 100%);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-import:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+    }
+
+    .btn-import:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-clear {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+
+    .btn-clear:hover {
+      background: var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .field-mapping {
+      margin-top: 20px;
+    }
+
+    .field-mapping h4 {
+      color: var(--primary-color);
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .mapping-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .mapping-label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .mapping-field {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: white;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+
+    .import-summary {
+      background: linear-gradient(135deg, var(--accent-purple) 0%, var(--secondary-color) 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+      box-shadow: 0 0 30px rgba(181, 55, 242, 0.3);
+    }
+
+    .import-summary.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    .summary-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .summary-stat:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    .summary-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1024px) {
+      .import-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <h2>🎯 HR System</h2>
+    <ul>
+      <li><a href="index.html">🏠 Dashboard</a></li>
+      <li><a href="employees.html">👥 Employees</a></li>
+      <li><a href="add-employee.html">➕ Add Employee</a></li>
+      <li><a href="import-employees.html" class="active">📥 Import CSV</a></li>
+      <li><a href="attendance.html">🕒 Attendance</a></li>
+      <li><a href="team.html">🤝 Team Formation</a></li>
+      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
+      <li><a href="python/dashboard.html">📊 Analytics</a></li>
+    </ul>
+  </aside>
+
+  <section class="main-content">
+    <header>
+      <div>
+        <h1>Import Employees from CSV</h1>
+      </div>
+      <div class="user">👤 Admin User</div>
+    </header>
+
+    <div class="import-container">
+      <!-- LEFT COLUMN: UPLOAD & INSTRUCTIONS -->
+      <div class="import-section">
+        <h3>📤 Upload CSV File</h3>
+
+        <div class="instructions">
+          <h4>📋 CSV Format (Flexible):</h4>
+          <ul>
+            <li><strong>Name</strong> - Employee name (e.g., name, employee_name, full_name)</li>
+            <li><strong>Department</strong> - Department name (e.g., dept, team, group)</li>
+            <li><strong>Role</strong> - Job title (e.g., position, job_title, designation)</li>
+            <li><strong>Skills</strong> - Skills/competencies (optional, comma-separated)</li>
+            <li><strong>Experience</strong> - Years of experience (optional)</li>
+            <li><strong>Availability</strong> - Available/Busy (optional)</li>
+            <li><strong>Performance Rating</strong> - Rating 1-10 (optional)</li>
+            <li><strong>Employee ID</strong> - Unique ID (optional)</li>
+          </ul>
+          <p style="margin-top: 12px; color: var(--primary-color); font-size: 0.9rem; font-weight: 600;">
+            💡 Column names are flexible! The system auto-detects similar names (e.g., "FullName" = "Name")
+          </p>
+        </div>
+
+        <div class="file-upload-area" id="dropZone">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">Drag & drop your CSV file here</div>
+          <div class="upload-subtext">or click to browse</div>
+          <input type="file" id="csvFile" accept=".csv" />
+        </div>
+
+        <div class="file-info" id="fileInfo"></div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <a href="#" onclick="downloadTemplate()" class="template-download" id="templateBtn">
+          📋 Download Template CSV
+        </a>
+      </div>
+
+      <!-- RIGHT COLUMN: PREVIEW & MAPPING -->
+      <div class="import-section">
+        <h3>👁️ Preview</h3>
+
+        <div class="field-mapping" id="fieldMapping" style="display: none;">
+          <h4>Field Mapping</h4>
+          <div id="mappingContainer"></div>
+        </div>
+
+        <div id="previewContainer" style="display: none;">
+          <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(11, 82, 186, 0.05)); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--primary-color);">
+            <strong style="color: var(--primary-color);">🔍 Auto-Detected Columns:</strong>
+            <div id="detectedColumns" style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 0.85rem;"></div>
+          </div>
+
+          <div class="field-mapping" id="fieldMapping" style="display: none;">
+            <h4>🔗 Map Your Columns</h4>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">
+              Select which CSV column corresponds to each field. Required fields: Name, Department, Role
+            </p>
+            <div id="mappingContainer"></div>
+          </div>
+
+          <div class="preview-table-container">
+            <table class="preview-table">
+              <thead>
+                <tr id="previewHeader"></tr>
+              </thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+
+          <div class="import-summary" id="importSummary">
+            <div class="summary-stat">
+              <span class="summary-label">📋 Records Found</span>
+              <span class="summary-value" id="recordCount">0</span>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-label">✅ Valid Records</span>
+              <span class="summary-value" id="validCount">0</span>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-label">⚠️ Issues Found</span>
+              <span class="summary-value" id="issueCount">0</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn-clear" onclick="clearImport()">Clear</button>
+            <button class="btn-import" id="importBtn" onclick="importEmployees()">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+  <script>
+    let parsedData = null;
+    const dropZone = document.getElementById('dropZone');
+    const csvFileInput = document.getElementById('csvFile');
+
+    // Handle drop zone
+    dropZone.addEventListener('click', () => csvFileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        csvFileInput.files = files;
+        handleFileUpload(files[0]);
+      }
+    });
+
+    csvFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileUpload(e.target.files[0]);
+      }
+    });
+
+    function handleFileUpload(file) {
+      if (!file.name.endsWith('.csv')) {
+        showStatus('Only CSV files are supported', 'error');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showStatus('File size must be less than 5MB', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const csv = e.target.result;
+          parsedData = parseCSV(csv);
+          
+          document.getElementById('fileInfo').innerHTML = `
+            <strong>✅ ${file.name}</strong>
+            Size: ${(file.size / 1024).toFixed(2)} KB | Records: ${parsedData.rows.length} | Columns: ${parsedData.headers.length}
+          `;
+          document.getElementById('fileInfo').classList.add('show');
+
+          displayPreview(parsedData);
+          showStatus(`Successfully loaded ${parsedData.rows.length} records from CSV with ${parsedData.headers.length} columns`, 'success');
+        } catch (error) {
+          showStatus(`Error parsing CSV: ${error.message}`, 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCSV(csvText) {
+      const lines = csvText.split('\n').filter(line => line.trim());
+      if (lines.length < 2) {
+        throw new Error('CSV file must have at least a header and one data row');
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim());
+      
+      // Return raw data and headers for dynamic mapping
+      return {
+        headers: headers,
+        rows: lines.slice(1).map(line => {
+          const values = line.split(',').map(v => v.trim());
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header] = values[index] || '';
+          });
+          return obj;
+        }).filter(row => Object.values(row).some(v => v)) // Filter empty rows
+      };
+    }
+
+    function displayPreview(data) {
+      if (data.rows.length === 0) {
+        showStatus('No valid records found', 'warning');
+        return;
+      }
+
+      const headers = data.headers;
+      
+      // Show detected columns
+      const detectedHTML = headers.map(h => 
+        `<div style="background: white; padding: 8px 12px; border-radius: 4px; border: 1px solid #0f52ba; color: #0f52ba; font-weight: 500;">
+          📎 ${h}
+        </div>`
+      ).join('');
+      document.getElementById('detectedColumns').innerHTML = detectedHTML;
+
+      // Show field mapping interface
+      showFieldMapping(headers);
+      
+      // Build header
+      const headerRow = document.getElementById('previewHeader');
+      headerRow.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
+
+      // Build body (show max 5 rows)
+      const bodyHtml = data.rows.slice(0, 5).map(row => {
+        return `<tr>${headers.map(h => `<td>${row[h] || '-'}</td>`).join('')}</tr>`;
+      }).join('');
+      
+      document.getElementById('previewBody').innerHTML = bodyHtml;
+
+      // Show preview containers
+      document.getElementById('previewContainer').style.display = 'block';
+      document.getElementById('importSummary').classList.add('show');
+
+      // Update summary
+      document.getElementById('recordCount').textContent = data.rows.length;
+      document.getElementById('validCount').textContent = data.rows.length;
+      document.getElementById('issueCount').textContent = '0';
+    }
+
+    function showFieldMapping(headers) {
+      const mappingContainer = document.getElementById('mappingContainer');
+      const standardFields = ['Name', 'Department', 'Role', 'Skills', 'Experience', 'Availability', 'Performance Rating', 'Employee ID'];
+      
+      const mappingHtml = standardFields.map(field => {
+        const bestMatch = findBestMatch(field, headers);
+        const isMatched = bestMatch ? '✅' : '⚠️';
+        return `
+          <div class="mapping-item" style="${bestMatch ? 'border-left: 4px solid #1cc88a;' : 'border-left: 4px solid #f6c23e;'}">
+            <div class="mapping-label" style="${['Name', 'Department', 'Role'].includes(field) ? 'color: #e74c3c; font-weight: 700;' : ''}">
+              ${isMatched} ${field}
+            </div>
+            <select class="mapping-field" data-field="${field}">
+              <option value="">-- Select Column --</option>
+              ${headers.map(h => `<option value="${h}" ${h === bestMatch ? 'selected' : ''}>${h}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }).join('');
+
+      mappingContainer.innerHTML = mappingHtml;
+      document.getElementById('fieldMapping').style.display = 'block';
+    }
+
+    function findBestMatch(standardField, headers) {
+      const variations = {
+        'Name': ['name', 'employee_name', 'full_name', 'employee', 'username', 'employee_id', 'emp_name', 'staff_name'],
+        'Department': ['department', 'dept', 'team', 'group', 'division', 'unit', 'section'],
+        'Role': ['role', 'position', 'job_title', 'title', 'designation', 'job_role', 'position_title'],
+        'Skills': ['skills', 'skill', 'competencies', 'expertise', 'technical_skills', 'competency'],
+        'Experience': ['experience', 'exp', 'years', 'years_experience', 'years_exp', 'yrs_exp', 'tenure'],
+        'Availability': ['availability', 'available', 'status', 'working_status', 'work_status', 'availability_status'],
+        'Performance Rating': ['performance_rating', 'rating', 'performance', 'score', 'perf_rating', 'performance_score'],
+        'Employee ID': ['employee_id', 'empid', 'id', 'employee_code', 'emp_id', 'staff_id', 'emp_code']
+      };
+
+      const targets = variations[standardField] || [standardField.toLowerCase()];
+      
+      // First pass: Exact match (case insensitive)
+      for (let header of headers) {
+        const headerLower = header.toLowerCase().replace(/[\s_-]/g, '');
+        for (let target of targets) {
+          const targetLower = target.toLowerCase().replace(/[\s_-]/g, '');
+          if (headerLower === targetLower) {
+            return header;
+          }
+        }
+      }
+
+      // Second pass: Contains match (case insensitive)
+      for (let target of targets) {
+        for (let header of headers) {
+          if (header.toLowerCase().includes(target) || target.includes(header.toLowerCase())) {
+            return header;
+          }
+        }
+      }
+
+      // Third pass: Levenshtein distance for close matches
+      for (let target of targets) {
+        for (let header of headers) {
+          if (levenshteinDistance(header.toLowerCase(), target.toLowerCase()) <= 2) {
+            return header;
+          }
+        }
+      }
+
+      return '';
+    }
+
+    function levenshteinDistance(str1, str2) {
+      const matrix = [];
+      for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+      }
+      for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+      }
+      for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+          if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+      return matrix[str2.length][str1.length];
+    }
+
+    function getFieldMapping() {
+      const mapping = {};
+      document.querySelectorAll('.mapping-field').forEach(select => {
+        const field = select.dataset.field;
+        const csvColumn = select.value;
+        if (csvColumn) {
+          mapping[field] = csvColumn;
+        }
+      });
+      return mapping;
+    }
+
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = message;
+      statusEl.className = `status-message ${type} show`;
+      
+      setTimeout(() => {
+        statusEl.classList.remove('show');
+      }, 5000);
+    }
+
+    function clearImport() {
+      csvFileInput.value = '';
+      parsedData = null;
+      document.getElementById('fileInfo').classList.remove('show');
+      document.getElementById('previewContainer').style.display = 'none';
+      document.getElementById('fieldMapping').style.display = 'none';
+      document.getElementById('statusMessage').classList.remove('show');
+    }
+
+    function importEmployees() {
+      if (!parsedData || parsedData.rows.length === 0) {
+        showStatus('No data to import', 'error');
+        return;
+      }
+
+      // Get field mapping from dropdowns
+      const fieldMapping = getFieldMapping();
+      
+      // Validate that required fields are mapped
+      if (!fieldMapping['Name'] || !fieldMapping['Department'] || !fieldMapping['Role']) {
+        showStatus('Please map Name, Department, and Role fields', 'error');
+        return;
+      }
+
+      // Get existing employees
+      let employees = JSON.parse(localStorage.getItem('employees')) || [];
+      
+      // Convert CSV data to employee format using mapping
+      const newEmployees = parsedData.rows.map(row => {
+        const emp = {
+          name: getValueByMapping(row, fieldMapping['Name']) || '',
+          department: getValueByMapping(row, fieldMapping['Department']) || '',
+          role: getValueByMapping(row, fieldMapping['Role']) || '',
+          skills: getValueByMapping(row, fieldMapping['Skills']) || '',
+          experience: parseFloat(getValueByMapping(row, fieldMapping['Experience']) || 0),
+          availability: getValueByMapping(row, fieldMapping['Availability']) || 'Available',
+          performanceRating: parseFloat(getValueByMapping(row, fieldMapping['Performance Rating']) || 0),
+          employeeId: getValueByMapping(row, fieldMapping['Employee ID']) || '',
+          status: 'Present'
+        };
+        return emp;
+      }).filter(emp => emp.name && emp.department && emp.role); // Only keep valid records
+
+      if (newEmployees.length === 0) {
+        showStatus('No valid records found after mapping. Check your field selections.', 'error');
+        return;
+      }
+
+      // Add new employees
+      employees = employees.concat(newEmployees);
+      localStorage.setItem('employees', JSON.stringify(employees));
+
+      showStatus(`✅ Successfully imported ${newEmployees.length} employees!`, 'success');
+      
+      setTimeout(() => {
+        window.location.href = 'employees.html';
+      }, 2000);
+    }
+
+    function getValueByMapping(row, csvColumn) {
+      if (!csvColumn) return '';
+      return row[csvColumn] || '';
+    }
+
+    function downloadTemplate() {
+      const template = `Employee ID,Name,Department,Role,Skills,Experience,Availability,Performance Rating
+EMP001,John Doe,Engineering,Software Engineer,JavaScript React Node.js,5,Available,8.5
+EMP002,Jane Smith,Engineering,Backend Developer,Python Django SQL,3,Available,7.8
+EMP003,Mike Johnson,Engineering,Senior Developer,Java Spring Hibernate,7,Busy,9.2
+EMP004,Sarah Williams,Design,UI Designer,UI/UX Design Figma,4,Available,7.5
+EMP005,David Brown,Sales,Sales Manager,Sales CRM Negotiation,6,Available,8.0`;
+
+      const blob = new Blob([template], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'employee_template.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
