@@ -1,55 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Manage employees in HR System">
-  <title>Employees - HR Management System</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Employees - HR AI</title>
+
+<style>
+body {
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color: white;
+  font-family: 'Segoe UI';
+  padding:20px;
+}
+
+.container { max-width:1100px; margin:auto; }
+
+/* HEADER */
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* BUTTONS */
+.controls {
+  margin:15px 0;
+  display:flex;
+  gap:10px;
+}
+
+button {
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#00d4ff;
+}
+
+/* TABLE */
+table {
+  width:100%;
+  background: rgba(255,255,255,0.08);
+  border-collapse:collapse;
+}
+
+th, td { padding:10px; }
+th { background: rgba(0,212,255,0.2); }
+
+tr:hover { background: rgba(255,255,255,0.1); }
+
+/* TAG */
+.available{background:#00ff88;color:black;padding:3px 6px;border-radius:5px;}
+.busy{background:red;padding:3px 6px;border-radius:5px;}
+
+input.edit {
+  width:100%;
+  background:transparent;
+  border:1px solid #ccc;
+  color:white;
+}
+</style>
 </head>
+
 <body>
 
-  <aside class="sidebar">
-    <h2>🎯 HR System</h2>
-    <ul>
-      <li><a href="index.html">🏠 Dashboard</a></li>
-      <li><a href="employees.html" class="active">👥 Employees</a></li>
-      <li><a href="add-employee.html">➕ Add Employee</a></li>
-      <li><a href="import-employees.html">📕 Import CSV</a></li>
-      <li><a href="attendance.html">🕒 Attendance</a></li>
-      <li><a href="team.html">🤝 Team Formation</a></li>
-      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
-      <li><a href="python/dashboard.html">📊 Analytics</a></li>
-    </ul>
-  </aside>
+<div class="container">
 
-  <section class="main-content">
-    <header>
-      <div>
-        <h1>Employee List</h1>
-      </div>
-      <div class="user">👤 Admin User</div>
-    </header>
+<header>
+<h1>👥 Employee Dashboard</h1>
+</header>
 
-    <div class="result-box show">
-      <table id="employeeTable">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Department</th>
-            <th>Role</th>
-            <th>Skills</th>
-            <th>Experience (yrs)</th>
-            <th>Rating</th>
-            <th>Availability</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
+<!-- CONTROLS -->
+<div class="controls">
+<button onclick="sortByPerformance()">Top Performers</button>
+<button onclick="sortByExperience()">High Experience</button>
+<button onclick="aiRank()">AI Rank</button>
+<button onclick="reset()">Reset</button>
+</div>
 
-  <script src="script.js"></script>
+<!-- TABLE -->
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Skills</th>
+<th>Exp</th>
+<th>Rating</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let employees = JSON.parse(localStorage.getItem("employees")) || [];
+let table = document.getElementById("table");
+
+// DISPLAY
+function display(data){
+  table.innerHTML="";
+
+  data.forEach((e,i)=>{
+
+    let tr=document.createElement("tr");
+
+    tr.innerHTML=`
+<td contenteditable="true" onblur="update(${i},'name',this.innerText)">${e.name}</td>
+<td contenteditable="true" onblur="update(${i},'skills',this.innerText)">${e.skills}</td>
+<td contenteditable="true" onblur="update(${i},'experience',this.innerText)">${e.experience}</td>
+<td contenteditable="true" onblur="update(${i},'performanceRating',this.innerText)">${e.performanceRating}</td>
+<td>
+<span class="${e.availability==='Busy'?'busy':'available'}">
+${e.availability || 'Available'}
+</span>
+</td>
+<td>
+<button onclick="deleteEmp(${i})">Delete</button>
+</td>
+`;
+
+    table.appendChild(tr);
+  });
+}
+
+// UPDATE
+function update(i,key,val){
+  employees[i][key] = key==="experience" || key==="performanceRating"
+    ? parseFloat(val)
+    : val;
+
+  localStorage.setItem("employees",JSON.stringify(employees));
+}
+
+// DELETE
+function deleteEmp(i){
+  employees.splice(i,1);
+  localStorage.setItem("employees",JSON.stringify(employees));
+  display(employees);
+}
+
+// SORT
+function sortByPerformance(){
+  employees.sort((a,b)=>b.performanceRating-a.performanceRating);
+  display(employees);
+}
+
+function sortByExperience(){
+  employees.sort((a,b)=>b.experience-a.experience);
+  display(employees);
+}
+
+// AI RANK 🔥
+function aiRank(){
+
+  employees.forEach(e=>{
+    let skillScore = (e.skills || "").split(",").length / 5;
+    let exp = Math.min((e.experience||0)/10,1);
+    let perf = (e.performanceRating||5)/10;
+
+    e.aiScore = (skillScore*0.4)+(exp*0.3)+(perf*0.3);
+  });
+
+  employees.sort((a,b)=>b.aiScore-a.aiScore);
+
+  alert("AI Ranking Applied 🚀");
+  display(employees);
+}
+
+// RESET
+function reset(){
+  display(JSON.parse(localStorage.getItem("employees")) || []);
+}
+
+// INIT
+display(employees);
+
+</script>
+
 </body>
 </html>

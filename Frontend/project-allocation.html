@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Project Allocation</title>
+
+    <style>
+      body {
+        font-family: "Segoe UI";
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 20px;
+      }
+
+      input,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: none;
+      }
+
+      button {
+        background: #00d4ff;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .result-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 8px;
+      }
+
+      .tag {
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: #00ff88;
+        color: black;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🚀 AI Project Allocation</h1>
+
+    <div class="card">
+      <h3>HR Inputs</h3>
+
+      <input id="skillsInput" placeholder="Skill Priority (java:10,react:6)" />
+      <input id="teamSize" placeholder="Team Size (5)" />
+      <input id="seniorCount" placeholder="No. of Seniors (2)" />
+      <input id="juniorCount" placeholder="No. of Juniors (2)" />
+
+      <button onclick="generateTeam()">Generate Team</button>
+    </div>
+
+    <div id="resultList"></div>
+
+    <script>
+      // SAMPLE EMPLOYEES (or use CSV)
+      let employees = JSON.parse(localStorage.getItem("employees")) || [
+        {
+          name: "Rahul",
+          skills: "java,react",
+          experience: 7,
+          performanceRating: 8,
+          communication: 9,
+        },
+        {
+          name: "Amit",
+          skills: "java,sql",
+          experience: 6,
+          performanceRating: 7,
+          communication: 6,
+        },
+        {
+          name: "Neha",
+          skills: "react,html",
+          experience: 5,
+          performanceRating: 7,
+          communication: 7,
+        },
+        {
+          name: "Ravi",
+          skills: "html,css",
+          experience: 3,
+          performanceRating: 6,
+          communication: 5,
+        },
+        {
+          name: "Karan",
+          skills: "react",
+          experience: 2,
+          performanceRating: 5,
+          communication: 4,
+        },
+        {
+          name: "Priya",
+          skills: "java,sql",
+          experience: 8,
+          performanceRating: 9,
+          communication: 8,
+        },
+      ];
+
+      // 🔥 PARSE PROJECT SKILLS
+      function parseProjectSkills(str) {
+        let obj = {};
+        str.split(",").forEach((s) => {
+          let [skill, val] = s.split(":");
+          obj[skill.trim()] = parseFloat(val) || 1;
+        });
+        return obj;
+      }
+
+      // 🔥 SCORE FUNCTION (WEIGHTED)
+      function score(emp, projStr) {
+        let proj = parseProjectSkills(projStr);
+        let empSkills = emp.skills.split(",");
+
+        let totalWeight = 0;
+        let matchScore = 0;
+
+        Object.keys(proj).forEach((skill) => {
+          let weight = proj[skill];
+
+          if (empSkills.includes(skill)) {
+            matchScore += weight;
+          }
+
+          totalWeight += weight;
+        });
+
+        let skillScore = matchScore / totalWeight;
+
+        let exp = Math.min((emp.experience || 0) / 10, 1);
+        let perf = (emp.performanceRating || 5) / 10;
+        let comm = (emp.communication || 5) / 10;
+
+        return {
+          total: skillScore * 0.5 + exp * 0.2 + perf * 0.2 + comm * 0.1,
+          skillScore: skillScore,
+        };
+      }
+
+      // 🔥 MAIN TEAM GENERATION
+      function generateTeam() {
+        let proj = document.getElementById("skillsInput").value.toLowerCase();
+
+        let teamSize = parseInt(document.getElementById("teamSize").value) || 5;
+        let seniorCount =
+          parseInt(document.getElementById("seniorCount").value) || 2;
+        let juniorCount =
+          parseInt(document.getElementById("juniorCount").value) || 2;
+
+        if (!proj) {
+          alert("Enter skills ❌");
+          return;
+        }
+
+        // SCORE EMPLOYEES
+        let ranked = employees.map((e) => {
+          let s = score(e, proj);
+          return { ...e, totalScore: s.total, skillScore: s.skillScore };
+        });
+
+        ranked.sort((a, b) => b.totalScore - a.totalScore);
+
+        let team = [];
+
+        // 👑 LEADER
+        let leader = ranked
+          .filter((e) => e.communication >= 5 && e.skillScore >= 0.3)
+          .sort((a, b) => b.communication - a.communication)[0];
+
+        if (leader) {
+          team.push({ ...leader, role: "Leader" });
+        }
+
+        // 💼 SENIORS (≥5 yrs)
+        let seniors = ranked.filter(
+          (e) => e.experience >= 5 && (!leader || e.name !== leader.name),
+        );
+
+        team.push(
+          ...seniors
+            .slice(0, seniorCount)
+            .map((e) => ({ ...e, role: "Senior" })),
+        );
+
+        // 🧑‍💻 JUNIORS (≥2 yrs)
+        let juniors = ranked.filter(
+          (e) =>
+            e.experience >= 2 &&
+            e.experience < 5 &&
+            !team.find((t) => t.name === e.name),
+        );
+
+        team.push(
+          ...juniors
+            .slice(0, juniorCount)
+            .map((e) => ({ ...e, role: "Junior" })),
+        );
+
+        // LIMIT TEAM SIZE
+        team = team.slice(0, teamSize);
+
+        displayTeam(team);
+      }
+
+      // 🔥 DISPLAY RESULT
+      function displayTeam(team) {
+        let resultList = document.getElementById("resultList");
+
+        resultList.innerHTML = "<h2>🎯 Final Team</h2>";
+
+        team.forEach((e) => {
+          let div = document.createElement("div");
+          div.className = "result-card";
+
+          div.innerHTML = `
+      <strong>${e.name}</strong>
+      <span class="tag">${e.role}</span><br>
+      Exp: ${e.experience} yrs | Comm: ${e.communication}<br>
+      Skill Match: ${(e.skillScore * 100).toFixed(1)}%<br>
+      Total Score: ${(e.totalScore * 100).toFixed(1)}%
+    `;
+
+          resultList.appendChild(div);
+        });
+      }
+    </script>
+  </body>
+</html>

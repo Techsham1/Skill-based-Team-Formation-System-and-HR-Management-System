@@ -1,45 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AI-powered team formation">
-  <title>Team Formation - HR Management System</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>AI Team Formation</title>
+
+<style>
+body{
+  font-family:'Segoe UI';
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
+  padding:30px;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+}
+
+.card{
+  background:rgba(255,255,255,0.08);
+  padding:25px;
+  border-radius:15px;
+}
+
+input{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+  border:none;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:15px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,#00d4ff,#0f52ba);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* RESULT */
+.result-card{
+  background:rgba(255,255,255,0.1);
+  margin-top:15px;
+  padding:15px;
+  border-radius:10px;
+}
+
+.tag{
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+}
+
+.leader{background:#00ff88;color:black;}
+.senior{background:#ffd000;color:black;}
+.junior{background:#ff4d4d;color:white;}
+</style>
+
 </head>
+
 <body>
 
-  <aside class="sidebar">
-    <h2>🎯 HR System</h2>
-    <ul>
-      <li><a href="index.html">🏠 Dashboard</a></li>
-      <li><a href="employees.html">👥 Employees</a></li>
-      <li><a href="add-employee.html">➕ Add Employee</a></li>
-      <li><a href="import-employees.html">📕 Import CSV</a></li>
-      <li><a href="team.html" class="active">🤝 Team Formation</a></li>
-      <li><a href="team-config.html">⚙️ Team Configuration</a></li>
-      <li><a href="python/dashboard.html">📊 Analytics</a></li>
-    </ul>
-  </aside>
+<div class="container">
 
-  <section class="main-content">
-    <header>
-      <div>
-        <h1>AI Team Formation</h1>
-      </div>
-      <div class="user">👤 Admin User</div>
-    </header>
+<h1>🚀 AI Team Formation</h1>
 
-    <div class="result-box show">
-      <p style="margin-bottom: 25px; color: var(--text-secondary);">Generate optimal teams based on skills and experience using AI algorithms.</p>
-      <div style="margin-bottom: 30px; display: flex; gap: 15px;">
-        <button id="generateTeamBtn">🤖 Generate Teams</button>
-        <a href="team-test.html" style="display: inline-flex; align-items: center; padding: 12px 24px; background: linear-gradient(135deg, var(--accent-purple) 0%, #8b5cf6 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; border: 2px solid rgba(181, 55, 242, 0.3); box-shadow: 0 0 20px rgba(181, 55, 242, 0.2);">🧪 Debug & Test</a>
-      </div>
-      <div class="result-box" id="teamResult"></div>
-    </div>
-  </section>
+<div class="card">
 
-  <script src="script.js"></script>
+<input id="skillsInput" placeholder="Skills (java,react)">
+<input id="teamSize" placeholder="Team Size (5)">
+<input id="seniorCount" placeholder="No. Seniors (2)">
+<input id="juniorCount" placeholder="No. Juniors (2)">
+
+<button onclick="generateTeam()">Generate AI Team</button>
+
+<div id="teamResult"></div>
+
+</div>
+
+</div>
+
+<script>
+
+// LOAD EMPLOYEES FROM employees.html
+function loadEmployees(){
+  return JSON.parse(localStorage.getItem("employees")) || [];
+}
+
+// GENERATE TEAM
+function generateTeam(){
+
+  let employees = loadEmployees();
+
+  if(employees.length === 0){
+    alert("No employees found ❌ (Add or import first)");
+    return;
+  }
+
+  let skills = document.getElementById("skillsInput").value.toLowerCase().split(",");
+  let teamSize = parseInt(document.getElementById("teamSize").value)||5;
+  let seniorCount = parseInt(document.getElementById("seniorCount").value)||2;
+  let juniorCount = parseInt(document.getElementById("juniorCount").value)||2;
+
+  // 🔥 SCORE SYSTEM
+  let ranked = employees.map(e=>{
+
+    let empSkills = (e.skills||"").toLowerCase().split(",");
+
+    let match = skills.filter(s => empSkills.includes(s.trim())).length;
+    let skillScore = match / skills.length;
+
+    let exp = Math.min((e.experience||0)/10,1);
+    let perf = (e.performanceRating||5)/10;
+    let comm = (e.communication||5)/10;
+
+    let total = (skillScore*0.5)+(exp*0.2)+(perf*0.2)+(comm*0.1);
+
+    return {...e,totalScore:total};
+  });
+
+  ranked.sort((a,b)=>b.totalScore-a.totalScore);
+
+  let team = [];
+
+  // 👑 LEADER (highest communication + good skill)
+  let leader = ranked
+    .filter(e => (e.communication||5)>=5)
+    .sort((a,b)=>b.communication-a.communication)[0];
+
+  if(leader){
+    team.push({...leader,role:"Leader"});
+  }
+
+  // 💼 SENIOR (5+ exp)
+  let seniors = ranked.filter(e=>e.experience>=5 && (!leader || e.name!==leader.name));
+  team.push(...seniors.slice(0,seniorCount).map(e=>({...e,role:"Senior"})));
+
+  // 🧑‍💻 JUNIOR (2+ exp)
+  let juniors = ranked.filter(e=>e.experience>=2 && e.experience<5 && !team.find(t=>t.name===e.name));
+  team.push(...juniors.slice(0,juniorCount).map(e=>({...e,role:"Junior"})));
+
+  team = team.slice(0,teamSize);
+
+  displayTeam(team);
+}
+
+// DISPLAY
+function displayTeam(team){
+
+  let container = document.getElementById("teamResult");
+  container.innerHTML="<h3>🔥 Final Team</h3>";
+
+  if(team.length===0){
+    container.innerHTML+="<p>No match ❌</p>";
+    return;
+  }
+
+  team.forEach(e=>{
+
+    let roleClass =
+      e.role==="Leader" ? "leader" :
+      e.role==="Senior" ? "senior" : "junior";
+
+    let div=document.createElement("div");
+    div.className="result-card";
+
+    div.innerHTML=`
+      <b>${e.name}</b>
+      <span class="tag ${roleClass}">${e.role}</span><br>
+      Skills: ${e.skills}<br>
+      Exp: ${e.experience} | Comm: ${e.communication || 5}<br>
+      Score: ${(e.totalScore*100).toFixed(1)}%
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+</script>
+
 </body>
 </html>
